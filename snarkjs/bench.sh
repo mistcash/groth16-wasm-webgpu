@@ -21,5 +21,5 @@ $SNARKJS_BIN groth16 prove build/circuit_final.zkey build/witness.wtns build/pro
 
 END_MS=$(node -e 'console.log(Date.now())')
 
-$SNARKJS_BIN r1cs info build/circuit.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
-echo "snarkjs_prover_ms=$((END_MS-START_MS))"
+$SNARKJS_BIN r1cs info build/circuit.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/[BENCH] snarkjs_constraints=\1/p'
+echo "[BENCH] snarkjs_prover_ms=$((END_MS-START_MS))"

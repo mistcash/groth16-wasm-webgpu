@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"time"
 
@@ -14,12 +15,14 @@ import (
 	poseidoncircuit "github.com/consensys/gnark/std/permutation/poseidon2"
 )
 
-type Poseidon250Circuit struct {
+type PoseidonCircuit struct {
 	In  frontend.Variable `gnark:",public"`
 	Out frontend.Variable
 }
 
-func (c *Poseidon250Circuit) Define(api frontend.API) error {
+var ROUNDS = 286
+
+func (c *PoseidonCircuit) Define(api frontend.API) error {
 	state := c.In
 
 	params := poseidonnative.GetDefaultParameters()
@@ -28,7 +31,7 @@ func (c *Poseidon250Circuit) Define(api frontend.API) error {
 		return err
 	}
 
-	for i := 0; i < 250; i++ {
+	for i := 0; i < ROUNDS; i++ {
 		state = h.Compress(0, state)
 	}
 
@@ -43,7 +46,7 @@ func computeOutput(input uint64) bn254fr.Element {
 	params := poseidonnative.GetDefaultParameters()
 	perm := poseidonnative.NewPermutation(2, params.NbFullRounds, params.NbPartialRounds)
 
-	for i := 0; i < 250; i++ {
+	for i := 0; i < ROUNDS; i++ {
 		zeroBytes := zero.Bytes()
 		stateBytes := state.Bytes()
 		digest, err := perm.Compress(zeroBytes[:], stateBytes[:])
@@ -57,7 +60,9 @@ func computeOutput(input uint64) bn254fr.Element {
 }
 
 func main() {
-	var circuit Poseidon250Circuit
+	var circuit PoseidonCircuit
+
+	log.SetOutput(io.Discard)
 
 	ccs, err := frontend.Compile(bn254.ID.ScalarField(), r1cs.NewBuilder, &circuit)
 	if err != nil {
@@ -69,7 +74,7 @@ func main() {
 		log.Fatalf("setup groth16: %v", err)
 	}
 
-	witness := Poseidon250Circuit{
+	witness := PoseidonCircuit{
 		In:  1,
 		Out: computeOutput(1),
 	}
@@ -90,11 +95,10 @@ func main() {
 		log.Fatalf("public witness: %v", err)
 	}
 
-	fmt.Printf("gnark_prover_ms=%d\n", proverMS)
+	fmt.Printf("[BENCH] gnark_constraints=%d\n", ccs.GetNbConstraints())
+	fmt.Printf("[BENCH] gnark_prover_ms=%d\n", proverMS)
 
 	if err := groth16.Verify(proof, vk, publicWitness); err != nil {
 		log.Fatalf("verify: %v", err)
 	}
-
-	fmt.Printf("gnark_constraints=%d\n", ccs.GetNbConstraints())
 }

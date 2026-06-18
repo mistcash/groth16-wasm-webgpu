@@ -102,6 +102,6 @@ fn main() {
     let verified = Groth16::<Bn254>::verify(&vk, &public_inputs, &proof).expect("verify");
     assert!(verified, "proof verification failed");
 
-    println!("arkworks_constraints={constraints}");
-    println!("arkworks_prover_ms={prover_ms}");
+    println!("[BENCH] arkworks_constraints={}", result.constraints);
+    println!("[BENCH] arkworks_prover_ms={}", result.prover_ms);
 }
