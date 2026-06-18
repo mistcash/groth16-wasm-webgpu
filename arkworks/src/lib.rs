@@ -209,7 +209,7 @@ pub fn run_browser_proof() -> Result<String, JsValue> {
             .map_err(|err| JsValue::from_str(&format!("verify failed: {err}")))?;
 
         Ok(format!(
-            "arkworks_constraints={}\narkworks_prover_ms={}\narkworks_verified={}",
+            "arkworks_constraints={}\n\n[BENCH] arkworks_prover_ms={}\n\narkworks_verified={}",
             browser_state.constraints, prover_ms, verified
         ))
     })

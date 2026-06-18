@@ -47,7 +47,7 @@ proveButton.addEventListener("click", async () => {
 
 		setStatus("Proof generation complete.");
 		setOutput([
-			`snarkjs_proof_ms=${elapsed.toFixed(2)}`,
+			`[BENCH] snarkjs_prover_ms=${elapsed.toFixed(2)}`,
 			`snarkjs_public_signals=${result.publicSignals.length}`,
 			`snarkjs_proof_pi_a=${JSON.stringify(result.proof.pi_a)}`,
 		].join("\n"));

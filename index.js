@@ -65,7 +65,9 @@ async function runArkworksAction() {
 	}
 
 	appendLog("[arkworks] Running benchmark...");
-	const proofResult = runArkworksProof();
+	const proofResult = await new Promise(resolve => {
+		setTimeout(() => { resolve(runArkworksProof()) }, 50);
+	});
 	appendLog(proofResult);
 	appendLog("[arkworks] Benchmark complete.");
 }
@@ -85,7 +87,9 @@ async function runSnarkjsAction() {
 	const result = await groth16.fullProve(inputJson, wasmUrl, zkeyUrl);
 	const elapsed = performance.now() - start;
 
-	appendLog(`snarkjs_proof_ms=${elapsed.toFixed(2)}`);
+	appendLog(``);
+	appendLog(`[BENCH] snarkjs_prover_ms=${elapsed.toFixed(2)}`);
+	appendLog(``);
 	appendLog(`snarkjs_public_signals=${result.publicSignals.length}`);
 	appendLog(`snarkjs_proof_pi_a=${JSON.stringify(result.proof.pi_a)}`);
 	appendLog("[snarkjs] Benchmark complete.");
