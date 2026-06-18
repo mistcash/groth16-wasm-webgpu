@@ -90,10 +90,11 @@ func main() {
 		log.Fatalf("public witness: %v", err)
 	}
 
+	fmt.Printf("gnark_prover_ms=%d\n", proverMS)
+
 	if err := groth16.Verify(proof, vk, publicWitness); err != nil {
 		log.Fatalf("verify: %v", err)
 	}
 
 	fmt.Printf("gnark_constraints=%d\n", ccs.GetNbConstraints())
-	fmt.Printf("gnark_prover_ms=%d\n", proverMS)
 }
