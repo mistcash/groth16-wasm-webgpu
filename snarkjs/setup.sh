@@ -17,7 +17,7 @@ fi
 # rm -rf build
 mkdir -p build
 
-# $CIRCOM_BIN circuit.circom --r1cs --wasm --sym -l node_modules -o build --O2
+$CIRCOM_BIN circuit.circom --r1cs --wasm --sym -l node_modules -o build --O2
 
 FINAL_PTAU="pot16_final.ptau"
 # $SNARKJS_BIN powersoftau new bn128 16 build/pot16_0000.ptau -v >/dev/null
