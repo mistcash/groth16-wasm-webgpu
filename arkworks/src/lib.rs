@@ -1,18 +1,18 @@
 use ark_bn254::{Bn254, Fr};
 use ark_ff::PrimeField;
+use ark_crypto_primitives::sponge::constraints::CryptographicSpongeVar;
+use ark_crypto_primitives::sponge::poseidon::constraints::PoseidonSpongeVar;
+use ark_crypto_primitives::sponge::poseidon::traits::find_poseidon_ark_and_mds;
+use ark_crypto_primitives::sponge::poseidon::{PoseidonConfig, PoseidonSponge};
+use ark_crypto_primitives::sponge::{CryptographicSponge, FieldBasedCryptographicSponge};
 use ark_groth16::{Groth16, Proof, ProvingKey, VerifyingKey};
 use ark_r1cs_std::{alloc::AllocVar, eq::EqGadget, fields::fp::FpVar};
-use ark_relations::r1cs::{
+use ark_relations::gr1cs::{
     ConstraintSynthesizer, ConstraintSystem, ConstraintSystemRef, SynthesisError,
 };
 use ark_snark::SNARK;
-use ark_sponge::constraints::CryptographicSpongeVar;
-use ark_sponge::poseidon::constraints::PoseidonSpongeVar;
-use ark_sponge::poseidon::traits::find_poseidon_ark_and_mds;
-use ark_sponge::poseidon::{PoseidonConfig, PoseidonSponge};
-use ark_sponge::{CryptographicSponge, FieldBasedCryptographicSponge};
-use rand::rngs::StdRng;
-use rand::SeedableRng;
+use ark_std::rand::rngs::StdRng;
+use ark_std::rand::SeedableRng;
 use std::cell::RefCell;
 use wasm_bindgen::prelude::*;
 
