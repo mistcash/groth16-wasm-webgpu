@@ -27,20 +27,20 @@ mkdir -p build
 
 $CIRCOM_BIN poseidon250.circom --r1cs --wasm --sym -l node_modules -o build
 
-$SNARKJS_BIN powersoftau new bls12_381 17 build/pot17_0000.ptau -v >/dev/null
+$SNARKJS_BIN powersoftau new bn128 17 build/pot17_0000.ptau -v >/dev/null
 $SNARKJS_BIN powersoftau contribute build/pot17_0000.ptau build/pot17_final.ptau --name="first" -v -e="bench" >/dev/null
 
 if ! $SNARKJS_BIN groth16 setup build/poseidon250.r1cs build/pot17_final.ptau build/poseidon250_final.zkey >/dev/null; then
   snarkjs r1cs info build/poseidon250.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
   echo "snarkjs_prover_ms=unsupported"
-  echo "snarkjs_note=groth16_setup_failed_on_bls12_381"
+  echo "snarkjs_note=groth16_setup_failed_on_bn254"
   exit 0
 fi
 
 if ! $SNARKJS_BIN zkey export verificationkey build/poseidon250_final.zkey build/verification_key.json >/dev/null; then
   snarkjs r1cs info build/poseidon250.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
   echo "snarkjs_prover_ms=unsupported"
-  echo "snarkjs_note=groth16_export_failed_on_bls12_381"
+  echo "snarkjs_note=groth16_export_failed_on_bn254"
   exit 0
 fi
 
@@ -50,7 +50,7 @@ START_MS=$(node -e 'console.log(Date.now())')
 if ! $SNARKJS_BIN groth16 prove build/poseidon250_final.zkey build/witness.wtns build/proof.json build/public.json >/dev/null; then
   snarkjs r1cs info build/poseidon250.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
   echo "snarkjs_prover_ms=unsupported"
-  echo "snarkjs_note=groth16_prove_failed_on_bls12_381"
+  echo "snarkjs_note=groth16_prove_failed_on_bn254"
   exit 0
 fi
 END_MS=$(node -e 'console.log(Date.now())')

@@ -1,4 +1,4 @@
-use ark_bls12_381::{Bls12_381, Fr};
+use ark_bn254::{Bn254, Fr};
 use ark_ff::PrimeField;
 use ark_groth16::{Groth16, Proof, ProvingKey, VerifyingKey};
 use ark_r1cs_std::{alloc::AllocVar, eq::EqGadget, fields::fp::FpVar};
@@ -87,17 +87,17 @@ fn main() {
     cs.finalize();
     let constraints = cs.num_constraints();
 
-    let (pk, vk): (ProvingKey<Bls12_381>, VerifyingKey<Bls12_381>) =
-        Groth16::<Bls12_381>::circuit_specific_setup(circuit.clone(), &mut rng)
+    let (pk, vk): (ProvingKey<Bn254>, VerifyingKey<Bn254>) =
+        Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)
             .expect("groth16 setup");
 
     let start = Instant::now();
-    let proof: Proof<Bls12_381> =
-        Groth16::<Bls12_381>::prove(&pk, circuit.clone(), &mut rng).expect("groth16 prove");
+    let proof: Proof<Bn254> =
+        Groth16::<Bn254>::prove(&pk, circuit.clone(), &mut rng).expect("groth16 prove");
     let prover_ms = start.elapsed().as_millis();
 
     let public_inputs = vec![input];
-    let verified = Groth16::<Bls12_381>::verify(&vk, &public_inputs, &proof).expect("verify");
+    let verified = Groth16::<Bn254>::verify(&vk, &public_inputs, &proof).expect("verify");
     assert!(verified, "proof verification failed");
 
     println!("arkworks_constraints={constraints}");

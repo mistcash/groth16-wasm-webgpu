@@ -15,14 +15,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "ark-bls12-381"
+name = "ark-bn254"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c775f0d12169cba7aae4caeb547bb6a50781c7449a8aa53793827c9ec4abf488"
+checksum = "a22f4561524cd949590d78d7d4c5df8f592430d221f7f3c9497bbafd8972120f"
 dependencies = [
  "ark-ec",
  "ark-ff",
- "ark-serialize",
  "ark-std",
 ]
 
@@ -669,7 +668,7 @@ dependencies = [
 name = "zk-bench-arkworks"
 version = "0.1.0"
 dependencies = [
- "ark-bls12-381",
+ "ark-bn254",
  "ark-ff",
  "ark-groth16",
  "ark-r1cs-std",

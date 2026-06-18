@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	bls12381 "github.com/consensys/gnark-crypto/ecc/bls12-381"
-	bls12381fr "github.com/consensys/gnark-crypto/ecc/bls12-381/fr"
-	poseidonnative "github.com/consensys/gnark-crypto/ecc/bls12-381/fr/poseidon2"
+	bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
+	bn254fr "github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	poseidonnative "github.com/consensys/gnark-crypto/ecc/bn254/fr/poseidon2"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
@@ -36,9 +36,9 @@ func (c *Poseidon250Circuit) Define(api frontend.API) error {
 	return nil
 }
 
-func computeOutput(input uint64) bls12381fr.Element {
-	state := new(bls12381fr.Element).SetUint64(input)
-	zero := new(bls12381fr.Element)
+func computeOutput(input uint64) bn254fr.Element {
+	state := new(bn254fr.Element).SetUint64(input)
+	zero := new(bn254fr.Element)
 
 	params := poseidonnative.GetDefaultParameters()
 	perm := poseidonnative.NewPermutation(2, params.NbFullRounds, params.NbPartialRounds)
@@ -59,7 +59,7 @@ func computeOutput(input uint64) bls12381fr.Element {
 func main() {
 	var circuit Poseidon250Circuit
 
-	ccs, err := frontend.Compile(bls12381.ID.ScalarField(), r1cs.NewBuilder, &circuit)
+	ccs, err := frontend.Compile(bn254.ID.ScalarField(), r1cs.NewBuilder, &circuit)
 	if err != nil {
 		log.Fatalf("compile circuit: %v", err)
 	}
@@ -73,7 +73,7 @@ func main() {
 		In:  1,
 		Out: computeOutput(1),
 	}
-	fullWitness, err := frontend.NewWitness(&witness, bls12381.ID.ScalarField())
+	fullWitness, err := frontend.NewWitness(&witness, bn254.ID.ScalarField())
 	if err != nil {
 		log.Fatalf("create witness: %v", err)
 	}
