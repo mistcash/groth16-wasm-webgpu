@@ -5,6 +5,7 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>ZK Browser Bench Suite</title>
+	<script src="./gnark/web/wasm_exec.js"></script>
 </head>
 
 <body>
@@ -20,6 +21,11 @@
 			<h2>snarkjs (Circom/WASM)</h2>
 			<p><a href="./snarkjs/web/" target="_blank" rel="noopener noreferrer">Open dedicated snarkjs page</a></p>
 			<button id="run-snarkjs">Run snarkjs setup</button>
+		</section>
+		<section>
+			<h2>Gnark (Go/WASM)</h2>
+			<p><a href="./gnark/web/" target="_blank" rel="noopener noreferrer">Open dedicated Gnark page</a></p>
+			<button id="run-gnark">Run Gnark setup</button>
 		</section>
 		<h2>Logs</h2>
 		<pre id="output"></pre>
