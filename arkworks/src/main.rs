@@ -2,7 +2,9 @@ use ark_bn254::{Bn254, Fr};
 use ark_ff::PrimeField;
 use ark_groth16::{Groth16, Proof, ProvingKey, VerifyingKey};
 use ark_r1cs_std::{alloc::AllocVar, eq::EqGadget, fields::fp::FpVar};
-use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem, ConstraintSystemRef, SynthesisError};
+use ark_relations::r1cs::{
+    ConstraintSynthesizer, ConstraintSystem, ConstraintSystemRef, SynthesisError,
+};
 use ark_snark::SNARK;
 use ark_sponge::constraints::CryptographicSpongeVar;
 use ark_sponge::poseidon::constraints::PoseidonSpongeVar;
@@ -12,7 +14,8 @@ use ark_sponge::{CryptographicSponge, FieldBasedCryptographicSponge};
 use rand::thread_rng;
 use std::time::Instant;
 
-const ROUNDS: usize = 250;
+// const ROUNDS: usize = 250;
+const ROUNDS: usize = 212;
 
 #[derive(Clone)]
 struct Poseidon250Circuit {
@@ -88,8 +91,7 @@ fn main() {
     let constraints = cs.num_constraints();
 
     let (pk, vk): (ProvingKey<Bn254>, VerifyingKey<Bn254>) =
-        Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)
-            .expect("groth16 setup");
+        Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng).expect("groth16 setup");
 
     let start = Instant::now();
     let proof: Proof<Bn254> =
