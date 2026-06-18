@@ -1,6 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export function init_panic_hook(): void;
+
 export function run_browser_proof(): string;
 
 export function run_browser_setup(): string;
@@ -11,9 +13,12 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly run_browser_setup: () => [number, number, number, number];
     readonly run_browser_proof: () => [number, number, number, number];
+    readonly init_panic_hook: () => void;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+    readonly __wbindgen_malloc: (a: number, b: number) => number;
+    readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __externref_table_dealloc: (a: number) => void;
-    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

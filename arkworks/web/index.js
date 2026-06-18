@@ -1,4 +1,4 @@
-import init, { run_browser_proof, run_browser_setup } from "./pkg/zk_bench_arkworks.js";
+import init, { run_browser_proof, run_browser_setup, init_panic_hook } from "./pkg/zk_bench_arkworks.js";
 
 const setupButton = document.querySelector("#setup-arkworks");
 const proveButton = document.querySelector("#prove-arkworks");
@@ -22,6 +22,7 @@ setupButton.addEventListener("click", async () => {
 	setupButton.disabled = true;
 	proveButton.disabled = true;
 	output.textContent = "Running setup...";
+	init_panic_hook();
 
 	try {
 		const result = run_browser_setup();

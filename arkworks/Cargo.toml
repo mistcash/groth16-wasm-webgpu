@@ -2,6 +2,7 @@
 name = "zk-bench-arkworks"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -9,11 +10,33 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 ark-bn254 = "0.6"
 ark-ff = "0.6"
-ark-groth16 = "0.6"
+ark-groth16 = { version = "0.6", default-features = false }
 ark-r1cs-std = "0.6"
 ark-relations = "0.6"
 ark-snark = "0.6"
 ark-std = "0.6"
+ark-serialize = "0.6"
 js-sys = "0.3"
-ark-crypto-primitives = { version = "0.6", features = ["sponge", "constraints"] }
+ark-crypto-primitives = { version = "0.6", features = [
+	"sponge",
+	"constraints",
+] }
 wasm-bindgen = "0.2.125"
+console_error_panic_hook = "0.1"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.75"
+
+[build-dependencies]
+ark-bn254 = "0.6"
+ark-crypto-primitives = { version = "0.6", features = [
+	"sponge",
+	"constraints",
+] }
+ark-ff = "0.6"
+ark-groth16 = { version = "0.6" }
+ark-r1cs-std = "0.6"
+ark-relations = "0.6"
+ark-serialize = "0.6"
+ark-snark = "0.6"
+ark-std = "0.6"
