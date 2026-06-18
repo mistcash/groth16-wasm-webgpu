@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "description": "SnarkJS benchmark for 250 Poseidon calls",
   "scripts": {
-    "benchmark": "./benchmark.sh"
+    "setup": "./setup.sh",
+    "bench": "./bench.sh",
   },
   "dependencies": {
     "circomlib": "^2.0.5",
