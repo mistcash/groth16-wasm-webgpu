@@ -1,0 +1,15 @@
+{
+  "name": "zk-bench-arkworks",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "zk_bench_arkworks_bg.wasm",
+    "zk_bench_arkworks.js",
+    "zk_bench_arkworks.d.ts"
+  ],
+  "main": "zk_bench_arkworks.js",
+  "types": "zk_bench_arkworks.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
