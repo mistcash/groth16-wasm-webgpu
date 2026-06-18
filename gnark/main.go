@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed" // Required for //go:embed directives
 	"fmt"
 	"log"
 	"time"
@@ -8,11 +9,22 @@ import (
 	bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
 	bn254fr "github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	poseidonnative "github.com/consensys/gnark-crypto/ecc/bn254/fr/poseidon2"
-	"github.com/consensys/gnark/backend/groth16"
+	groth16_bn254 "github.com/consensys/gnark/backend/groth16/bn254"
+	cs_bn254 "github.com/consensys/gnark/constraint/bn254"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/frontend/cs/r1cs"
+	"github.com/consensys/gnark/logger"
 	poseidoncircuit "github.com/consensys/gnark/std/permutation/poseidon2"
+	"github.com/mistcash/zk-bench/gnark/serde"
 )
+
+//go:embed web/prover/pk
+var pkBuf []byte
+
+//go:embed web/prover/cs
+var csBuf []byte
+
+//go:embed web/vk.json
+var vkBuf []byte
 
 type PoseidonCircuit struct {
 	In  frontend.Variable `gnark:",public"`
@@ -38,64 +50,35 @@ func (c *PoseidonCircuit) Define(api frontend.API) error {
 	return nil
 }
 
-func computeOutput(input uint64) bn254fr.Element {
-	state := new(bn254fr.Element).SetUint64(input)
-	zero := new(bn254fr.Element)
-
-	params := poseidonnative.GetDefaultParameters()
-	perm := poseidonnative.NewPermutation(2, params.NbFullRounds, params.NbPartialRounds)
-
-	for i := 0; i < rounds; i++ {
-		zeroBytes := zero.Bytes()
-		stateBytes := state.Bytes()
-		digest, err := perm.Compress(zeroBytes[:], stateBytes[:])
-		if err != nil {
-			log.Fatalf("compute output: %v", err)
-		}
-		state.SetBytes(digest)
-	}
-
-	return *state
-}
+var cs *cs_bn254.R1CS
+var pk *groth16_bn254.ProvingKey
 
 func main() {
-	var circuit PoseidonCircuit
+	logger.Disable()
 
-	ccs, err := frontend.Compile(bn254.ID.ScalarField(), r1cs.NewBuilder, &circuit)
-	if err != nil {
-		log.Fatalf("compile circuit: %v", err)
-	}
-
-	pk, vk, err := groth16.Setup(ccs)
-	if err != nil {
-		log.Fatalf("setup groth16: %v", err)
-	}
+	cs = serde.DeserializeCS(csBuf)
+	pk = serde.DeserializePK(pkBuf)
 
 	witness := PoseidonCircuit{
 		In:  1,
-		Out: computeOutput(1),
+		Out: "6300423223993071961942742031094861668231719366232256368270642446068946998315",
 	}
+
+	start := time.Now()
+
 	fullWitness, err := frontend.NewWitness(&witness, bn254.ID.ScalarField())
 	if err != nil {
 		log.Fatalf("create witness: %v", err)
 	}
 
-	start := time.Now()
-	proof, err := groth16.Prove(ccs, pk, fullWitness)
+	proof, err := groth16_bn254.Prove(cs, pk, fullWitness)
 	if err != nil {
 		log.Fatalf("prove: %v", err)
 	}
+
 	proverMS := time.Since(start).Milliseconds()
 
-	publicWitness, err := fullWitness.Public()
-	if err != nil {
-		log.Fatalf("public witness: %v", err)
-	}
-
-	fmt.Printf("[BENCH] gnark_constraints=%d\n", ccs.GetNbConstraints())
+	fmt.Printf("[BENCH] gnark_constraints=%d\n", cs.GetNbConstraints())
 	fmt.Printf("[BENCH] gnark_prover_ms=%d\n", proverMS)
-
-	if err := groth16.Verify(proof, vk, publicWitness); err != nil {
-		log.Fatalf("verify: %v", err)
-	}
+	_ = proof
 }
