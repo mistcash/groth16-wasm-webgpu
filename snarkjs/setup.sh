@@ -4,46 +4,31 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
-if command -v circom >/dev/null 2>&1; then
-  CIRCOM_BIN="circom"
-elif command -v npx >/dev/null 2>&1 && npx --yes circom2 --help >/dev/null 2>&1; then
-  CIRCOM_BIN="npx --yes circom2"
-else
-  echo "circom compiler not found. Install circom 2.x or add circom2 npm package." >&2
-  exit 1
-fi
+CIRCOM_BIN="npx --yes circom2"
+SNARKJS_BIN="npx --yes snarkjs@0.7.6"
 
-if command -v snarkjs >/dev/null 2>&1; then
-  SNARKJS_BIN="snarkjs"
-elif command -v npx >/dev/null 2>&1; then
-  SNARKJS_BIN="npx --yes snarkjs@0.7.6"
-else
-  echo "snarkjs not found. Install dependencies with: npm install" >&2
-  exit 1
-fi
+echo "Using circom  $($CIRCOM_BIN --version)"
+echo "Using snarkjs $($SNARKJS_BIN --version | head -n1)"
 
 if [[ ! -d node_modules ]]; then
   npm ci
 fi
 
-rm -rf build
+# rm -rf build
 mkdir -p build
 
-$CIRCOM_BIN poseidon250.circom --r1cs --wasm --sym -l node_modules -o build
+# $CIRCOM_BIN circuit.circom --r1cs --wasm --sym -l node_modules -o build --O2
 
-$SNARKJS_BIN powersoftau new bn128 17 build/pot17_0000.ptau -v >/dev/null
-$SNARKJS_BIN powersoftau contribute build/pot17_0000.ptau build/pot17_final.ptau --name="first" -v -e="bench" >/dev/null
+FINAL_PTAU="pot16_final.ptau"
+# $SNARKJS_BIN powersoftau new bn128 16 build/pot16_0000.ptau -v >/dev/null
+$SNARKJS_BIN powersoftau prepare phase2 "build/pot16_0000.ptau" "build/$FINAL_PTAU"
 
-if ! $SNARKJS_BIN groth16 setup build/poseidon250.r1cs build/pot17_final.ptau build/poseidon250_final.zkey >/dev/null; then
-  snarkjs r1cs info build/poseidon250.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
-  echo "snarkjs_prover_ms=unsupported"
-  echo "snarkjs_note=groth16_setup_failed_on_bn254"
-  exit 0
-fi
+echo "groth16 setup"
+$SNARKJS_BIN groth16 setup build/circuit.r1cs "build/$FINAL_PTAU" build/circuit_final.zkey
 
-if ! $SNARKJS_BIN zkey export verificationkey build/poseidon250_final.zkey build/verification_key.json >/dev/null; then
-  snarkjs r1cs info build/poseidon250.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
-  echo "snarkjs_prover_ms=unsupported"
-  echo "snarkjs_note=groth16_export_failed_on_bn254"
-  exit 0
-fi
+echo "zkey export"
+$SNARKJS_BIN zkey export verificationkey build/circuit_final.zkey build/verification_key.json
+
+snarkjs r1cs info build/circuit.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
+
+echo "All done!";
