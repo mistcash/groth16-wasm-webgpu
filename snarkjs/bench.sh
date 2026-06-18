@@ -10,13 +10,10 @@ if [[ ! -f build/circuit_final.zkey || ! -f build/circuit_js/generate_witness.js
   exit 1
 fi
 
-# echo "Using snarkjs $($SNARKJS_BIN --version | head -n1)"
-
 node build/circuit_js/generate_witness.js build/circuit_js/circuit.wasm input.json build/witness.wtns
 
 START_MS=$(node -e 'console.log(Date.now())')
 
-# $SNARKJS_BIN groth16 prove -h
 $SNARKJS_BIN groth16 prove build/circuit_final.zkey build/witness.wtns build/proof.json build/public.json
 
 END_MS=$(node -e 'console.log(Date.now())')

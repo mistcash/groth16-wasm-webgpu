@@ -2,6 +2,7 @@ import initArk, {
 	run_browser_proof as runArkworksProof,
 	run_browser_setup as runArkworksSetup,
 } from "./arkworks/web/pkg/zk_bench_arkworks.js";
+import { createSnarkjsInitializer } from "./snarkjs/web/snarkjs-browser.js";
 
 const arkworksButton = document.querySelector("#run-arkworks");
 const snarkjsButton = document.querySelector("#run-snarkjs");
@@ -11,6 +12,7 @@ const wasmUrl = new URL("./snarkjs/build/circuit_js/circuit.wasm", import.meta.u
 const zkeyUrl = new URL("./snarkjs/build/circuit_final.zkey", import.meta.url).href;
 const inputUrl = new URL("./snarkjs/input.json", import.meta.url).href;
 const snarkjsUmdUrl = new URL("./snarkjs/node_modules/snarkjs/build/snarkjs.min.js", import.meta.url).href;
+const initializeSnarkjs = createSnarkjsInitializer({ inputUrl, wasmUrl, zkeyUrl, snarkjsUmdUrl });
 
 const state = {
 	busy: false,
@@ -20,7 +22,6 @@ const state = {
 	},
 	snarkjs: {
 		phase: "setup",
-		appPromise: null,
 	},
 };
 
@@ -42,25 +43,6 @@ function updateButtons() {
 	setButtonLabels();
 }
 
-async function fetchJson(url) {
-	const response = await fetch(url);
-	if (!response.ok) {
-		throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
-	}
-	return response.json();
-}
-
-function loadScript(url) {
-	return new Promise((resolve, reject) => {
-		const script = document.createElement("script");
-		script.src = url;
-		script.async = true;
-		script.onload = () => resolve();
-		script.onerror = () => reject(new Error(`Failed to load ${url}`));
-		document.head.appendChild(script);
-	});
-}
-
 async function ensureArkworksInitialized() {
 	if (state.arkworks.initialized) {
 		return;
@@ -69,24 +51,6 @@ async function ensureArkworksInitialized() {
 	await initArk();
 	state.arkworks.initialized = true;
 	appendLog("[arkworks] Wasm module loaded.");
-}
-
-async function initializeSnarkjs() {
-	if (!state.snarkjs.appPromise) {
-		state.snarkjs.appPromise = (async () => {
-			const inputJson = await fetchJson(inputUrl);
-			if (!globalThis.snarkjs) {
-				await loadScript(snarkjsUmdUrl);
-			}
-			if (!globalThis.snarkjs?.groth16) {
-				throw new Error("snarkjs browser bundle did not expose groth16.");
-			}
-			await Promise.all([fetch(wasmUrl), fetch(zkeyUrl)]);
-			return { groth16: globalThis.snarkjs.groth16, inputJson };
-		})();
-	}
-
-	return state.snarkjs.appPromise;
 }
 
 async function runArkworksAction() {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"time"
 
@@ -20,7 +19,7 @@ type PoseidonCircuit struct {
 	Out frontend.Variable
 }
 
-var ROUNDS = 286
+const rounds = 286
 
 func (c *PoseidonCircuit) Define(api frontend.API) error {
 	state := c.In
@@ -31,7 +30,7 @@ func (c *PoseidonCircuit) Define(api frontend.API) error {
 		return err
 	}
 
-	for i := 0; i < ROUNDS; i++ {
+	for i := 0; i < rounds; i++ {
 		state = h.Compress(0, state)
 	}
 
@@ -46,7 +45,7 @@ func computeOutput(input uint64) bn254fr.Element {
 	params := poseidonnative.GetDefaultParameters()
 	perm := poseidonnative.NewPermutation(2, params.NbFullRounds, params.NbPartialRounds)
 
-	for i := 0; i < ROUNDS; i++ {
+	for i := 0; i < rounds; i++ {
 		zeroBytes := zero.Bytes()
 		stateBytes := state.Bytes()
 		digest, err := perm.Compress(zeroBytes[:], stateBytes[:])
@@ -61,8 +60,6 @@ func computeOutput(input uint64) bn254fr.Element {
 
 func main() {
 	var circuit PoseidonCircuit
-
-	log.SetOutput(io.Discard)
 
 	ccs, err := frontend.Compile(bn254.ID.ScalarField(), r1cs.NewBuilder, &circuit)
 	if err != nil {

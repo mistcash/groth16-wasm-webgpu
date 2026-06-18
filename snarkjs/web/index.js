@@ -1,3 +1,5 @@
+import { createSnarkjsInitializer } from "./snarkjs-browser.js";
+
 const setupButton = document.querySelector("#setup-snarkjs");
 const proveButton = document.querySelector("#prove-snarkjs");
 const status = document.querySelector("#status-snarkjs");
@@ -7,8 +9,7 @@ const wasmUrl = new URL("../build/circuit_js/circuit.wasm", import.meta.url).hre
 const zkeyUrl = new URL("../build/circuit_final.zkey", import.meta.url).href;
 const inputUrl = new URL("../input.json", import.meta.url).href;
 const snarkjsUmdUrl = new URL("../node_modules/snarkjs/build/snarkjs.min.js", import.meta.url).href;
-
-let appPromise;
+const initialize = createSnarkjsInitializer({ inputUrl, wasmUrl, zkeyUrl, snarkjsUmdUrl });
 
 function setStatus(message) {
 	status.textContent = message;
@@ -16,51 +17,6 @@ function setStatus(message) {
 
 function setOutput(text) {
 	output.textContent = text;
-}
-
-async function fetchJson(url) {
-	const response = await fetch(url);
-	if (!response.ok) {
-		throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
-	}
-
-	return response.json();
-}
-
-function loadScript(url) {
-	return new Promise((resolve, reject) => {
-		const script = document.createElement("script");
-		script.src = url;
-		script.async = true;
-		script.onload = () => resolve();
-		script.onerror = () => reject(new Error(`Failed to load ${url}`));
-		document.head.appendChild(script);
-	});
-}
-
-async function initialize() {
-	if (!appPromise) {
-		appPromise = (async () => {
-			const inputJson = await fetchJson(inputUrl);
-
-			if (!globalThis.snarkjs) {
-				await loadScript(snarkjsUmdUrl);
-			}
-
-			if (!globalThis.snarkjs?.groth16) {
-				throw new Error("snarkjs browser bundle did not expose groth16.");
-			}
-
-			await Promise.all([
-				fetch(wasmUrl),
-				fetch(zkeyUrl),
-			]);
-
-			return { groth16: globalThis.snarkjs.groth16, inputJson };
-		})();
-	}
-
-	return appPromise;
 }
 
 setupButton.addEventListener("click", async () => {

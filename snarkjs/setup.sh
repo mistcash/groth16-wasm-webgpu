@@ -14,13 +14,11 @@ if [[ ! -d node_modules ]]; then
   npm ci
 fi
 
-# rm -rf build
 mkdir -p build
 
 $CIRCOM_BIN circuit.circom --r1cs --wasm --sym -l node_modules -o build --O2
 
 FINAL_PTAU="pot16_final.ptau"
-# $SNARKJS_BIN powersoftau new bn128 16 build/pot16_0000.ptau -v >/dev/null
 $SNARKJS_BIN powersoftau prepare phase2 "build/pot16_0000.ptau" "build/$FINAL_PTAU"
 
 echo "groth16 setup"
@@ -29,6 +27,6 @@ $SNARKJS_BIN groth16 setup build/circuit.r1cs "build/$FINAL_PTAU" build/circuit_
 echo "zkey export"
 $SNARKJS_BIN zkey export verificationkey build/circuit_final.zkey build/verification_key.json
 
-snarkjs r1cs info build/circuit.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
+$SNARKJS_BIN r1cs info build/circuit.r1cs | sed -nE 's/.*# of Constraints: ([0-9]+).*/snarkjs_constraints=\1/p'
 
-echo "All done!";
+echo "All done!"
