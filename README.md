@@ -1,5 +1,4 @@
 # zk-bench
-
 Benchmark suite for a 53k-constraint Poseidon circuits across three proving stacks:
 
 - [gnark](gnark) in Go
@@ -53,9 +52,13 @@ The legacy [snarkjs/benchmark.sh](snarkjs/benchmark.sh) wrapper still works and 
 - The Go and Rust benchmarks are intentionally small drivers rather than full applications.
 - Hash counts are intentionally different across stacks to keep constraint counts comparable: gnark uses 286 hashes, arkworks uses 291 hashes, and snarkjs uses 250 hashes.
 
-## Bench results backend
+## Benchmarks
 
-Benchmarked on Macbook M3 Pro 36gb, OS: Tahoe 26.3
+![Benchmarks](zk-bench.png)
+
+### Binary
+
+Benchmarked on Device: Macbook M3 Pro 36gb; OS: macOS Tahoe 26.3
 
 ```sh
 ➜  zk-bench  ./bench.sh
@@ -70,3 +73,21 @@ Benchmarked on Macbook M3 Pro 36gb, OS: Tahoe 26.3
 [BENCH] snarkjs_prover_ms=1804
 ```
 
+### WASM in browser
+
+Benchmarked on Google Chrome Version 149.0.7827.115 (Official Build) (arm64);
+Device: Macbook M3 Pro 36gb; OS: macOS Tahoe 26.3
+
+```sh
+[BENCH] arkworks_prover_ms=15469
+[BENCH] arkworks_prover_ms=9785
+[BENCH] arkworks_prover_ms=9789
+
+[BENCH] snarkjs_prover_ms=1161.90
+[BENCH] snarkjs_prover_ms=1081.50
+[BENCH] snarkjs_prover_ms=2087.30
+
+[BENCH] gnark_prover_ms=7849.70
+[BENCH] gnark_prover_ms=5521.00
+[BENCH] gnark_prover_ms=5553.90
+```
