@@ -1,0 +1,177 @@
+import { createCurveGPUContext, createCurveModule, } from "../../src/index.js";
+const EXAMPLE_BASES = {
+    bn254: {
+        x: hexToBytes("9d0d8fc58d435dd33d0bc7f528eb780a2c4679786fa36e662fdf079ac1770a0e"),
+        y: hexToBytes("3a1b1e8b1b87baa67b168eeb51d6f114588cf2f0de46ddcc5ebe0f3483ef141c"),
+    },
+    bls12_381: {
+        x: hexToBytes("160c53fd9087b35cf5ff769967fc1778c1a13b14c7954f1547e7d0f3cd6aaef040f4db21cc6eceed75fb0b9e41770112"),
+        y: hexToBytes("7122e70cd593acba8efd18791a63228cce250757135f59dd945140502958ac51c05900ad3f8c1c0e6aa20850fc3ebc0b"),
+    },
+    bls12_377: {
+        x: hexToBytes("efe91bb26eb1b9ea4e39cdff121548d55ccb37bdc8828218bb419daa2c1e958554ff87bf2562fcc8670a74fede488800"),
+        y: hexToBytes("a68e9c5555de82fd1a59a934363dfec20523b84fd42a186dd9523eca48b37fbdc4eeaf305d4f671fff2e10c5694a9101"),
+    },
+};
+function mustElement(id) {
+    const el = document.getElementById(id);
+    if (!(el instanceof HTMLElement)) {
+        throw new Error(`missing element: ${id}`);
+    }
+    return el;
+}
+function getCurveId() {
+    const curve = new URLSearchParams(window.location.search).get("curve") ?? "bn254";
+    if (curve !== "bn254" && curve !== "bls12_377" && curve !== "bls12_381") {
+        throw new Error(`unsupported curve: ${curve}`);
+    }
+    return curve;
+}
+function curveLabel(curve) {
+    switch (curve) {
+        case "bn254":
+            return "BN254";
+        case "bls12_377":
+            return "BLS12-377";
+        case "bls12_381":
+            return "BLS12-381";
+    }
+}
+function hexToBytes(hex) {
+    if (hex.length % 2 !== 0) {
+        throw new Error(`invalid hex length ${hex.length}`);
+    }
+    const out = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < out.length; i += 1) {
+        out[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+    }
+    return out;
+}
+function bytesToHex(bytes) {
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+function shortHex(bytes, keep = 12) {
+    const hex = bytesToHex(bytes);
+    return hex.length <= keep * 2 ? hex : `${hex.slice(0, keep)}...${hex.slice(-keep)}`;
+}
+function scalarLE(value) {
+    if (!Number.isInteger(value) || value < 0) {
+        throw new Error(`invalid scalar: ${value}`);
+    }
+    const out = new Uint8Array(32);
+    let carry = value;
+    let i = 0;
+    while (carry > 0 && i < out.length) {
+        out[i] = carry & 0xff;
+        carry >>>= 8;
+        i += 1;
+    }
+    return out;
+}
+function equalElements(a, b) {
+    if (a.length !== b.length) {
+        return false;
+    }
+    for (let i = 0; i < a.length; i += 1) {
+        if (bytesToHex(a[i]) !== bytesToHex(b[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+function equalAffine(a, b) {
+    return bytesToHex(a.x) === bytesToHex(b.x) && bytesToHex(a.y) === bytesToHex(b.y);
+}
+async function buildNTTInput(one, add, zero) {
+    const two = await add(one, one);
+    const three = await add(two, one);
+    const four = await add(two, two);
+    return [one, two, three, four, zero, zero, zero, zero];
+}
+async function runExample(curveId, log) {
+    const lines = [`=== ${curveLabel(curveId)} CurveGPU Library Example ===`, ""];
+    log(lines);
+    const context = await createCurveGPUContext();
+    const curve = await createCurveModule(context, curveId);
+    const diagnostics = context.diagnostics;
+    lines.push("1. Creating WebGPU context... OK");
+    if (diagnostics.vendor) {
+        lines.push(`adapter.vendor = ${diagnostics.vendor}`);
+    }
+    if (diagnostics.architecture) {
+        lines.push(`adapter.architecture = ${diagnostics.architecture}`);
+    }
+    log(lines);
+    const one = await curve.fr.montOne();
+    const two = await curve.fr.add(one, one);
+    const three = await curve.fr.add(two, one);
+    const threeRegular = await curve.fr.fromMontgomery(three);
+    lines.push("2. Field arithmetic... OK");
+    lines.push(`fr: 1 + 2 = 0x${shortHex(threeRegular)}`);
+    log(lines);
+    const nttInput = await buildNTTInput(one, (a, b) => curve.fr.add(a, b), curve.fr.zero());
+    const nttForward = await curve.ntt.forward(nttInput);
+    const nttRoundTrip = await curve.ntt.inverse(nttForward);
+    lines.push("3. NTT round-trip... OK");
+    lines.push(`ntt_roundtrip_equal = ${String(equalElements(nttInput, nttRoundTrip))}`);
+    log(lines);
+    const base = EXAMPLE_BASES[curveId];
+    if (!base) {
+        throw new Error(`example fixture unavailable for curve: ${curveId}`);
+    }
+    const base2 = await curve.g1.jacobianToAffine(await curve.g1.scalarMulAffine(base, scalarLE(2)));
+    const tripleByScalarMul = await curve.g1.jacobianToAffine(await curve.g1.scalarMulAffine(base, scalarLE(3)));
+    const tripleByMSM = await curve.g1.jacobianToAffine(await curve.g1msm.pippengerAffine([base, base2], [scalarLE(1), scalarLE(1)]));
+    lines.push("4. G1 scalar mul + MSM... OK");
+    lines.push(`g1_scalar_msm_equal = ${String(equalAffine(tripleByScalarMul, tripleByMSM))}`);
+    lines.push(`g1_result.x = 0x${shortHex(tripleByScalarMul.x)}`);
+    log(lines);
+    lines.push("");
+    lines.push("PASS: library example completed");
+    log(lines);
+    context.close();
+}
+const runButton = mustElement("run");
+const statusEl = mustElement("status");
+const logEl = mustElement("log");
+const headingEl = mustElement("heading");
+const descriptionEl = mustElement("description");
+const curveId = getCurveId();
+headingEl.textContent = `${curveLabel(curveId)} CurveGPU Library Example`;
+descriptionEl.textContent = "Small consumer-oriented example using the public CurveGPU browser API.";
+function writeLog(lines) {
+    logEl.textContent = lines.join("\n");
+}
+async function main() {
+    runButton.disabled = true;
+    statusEl.textContent = "Running";
+    document.body.dataset.status = "running";
+    try {
+        await runExample(curveId, writeLog);
+        statusEl.textContent = "Pass";
+        document.body.dataset.status = "pass";
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        writeLog([`=== ${curveLabel(curveId)} CurveGPU Library Example ===`, "", `FAIL: ${message}`]);
+        statusEl.textContent = "Fail";
+        document.body.dataset.status = "fail";
+        throw error;
+    }
+    finally {
+        runButton.disabled = false;
+    }
+}
+runButton.addEventListener("click", () => {
+    void main();
+});
+if (new URLSearchParams(window.location.search).get("autorun") === "1") {
+    void main();
+}
+else {
+    writeLog([
+        `=== ${curveLabel(curveId)} CurveGPU Library Example ===`,
+        "",
+        "Press Run to execute a small consumer-oriented example against the public CurveGPU API.",
+    ]);
+}

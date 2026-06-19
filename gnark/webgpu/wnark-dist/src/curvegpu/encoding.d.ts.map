@@ -1,0 +1,1 @@
+{"version":3,"file":"encoding.d.ts","sourceRoot":"","sources":["../../../src/curvegpu/encoding.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AACH,MAAM,MAAM,cAAc,GAAG,UAAU,CAAC;AACxC,MAAM,MAAM,iBAAiB,GAAG,UAAU,CAAC;AAC3C,MAAM,MAAM,oBAAoB,GAAG,UAAU,CAAC;AAC9C,MAAM,MAAM,uBAAuB,GAAG,UAAU,CAAC;AAEjD;;;GAGG;AACH,wBAAgB,YAAY,CAAC,GAAG,EAAE,MAAM,EAAE,QAAQ,EAAE,MAAM,GAAG,cAAc,CAiB1E"}

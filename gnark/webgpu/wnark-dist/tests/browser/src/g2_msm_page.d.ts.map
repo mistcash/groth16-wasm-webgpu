@@ -1,0 +1,1 @@
+{"version":3,"file":"g2_msm_page.d.ts","sourceRoot":"","sources":["../../../../tests/browser/src/g2_msm_page.ts"],"names":[],"mappings":"AAAA,OAAO,EAAG,CAAC;AAGX,OAAO,KAAK,EAKV,WAAW,EAEZ,MAAM,uBAAuB,CAAC;AAoL/B,wBAAsB,QAAQ,CAAC,MAAM,EAAE,WAAW,EAAE,GAAG,EAAE,CAAC,GAAG,EAAE,MAAM,KAAK,IAAI,GAAG,OAAO,CAAC;IAAE,MAAM,EAAE,MAAM,CAAC;IAAC,MAAM,EAAE,MAAM,CAAA;CAAE,CAAC,CAgE3H"}

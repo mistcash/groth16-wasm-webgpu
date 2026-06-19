@@ -1,0 +1,1 @@
+{"version":3,"file":"fr_ops_page.d.ts","sourceRoot":"","sources":["../../../../tests/browser/src/fr_ops_page.ts"],"names":[],"mappings":"AAAA,OAAO,EAAG,CAAC;AAGX,OAAO,KAAK,EAAwB,WAAW,EAAiC,MAAM,uBAAuB,CAAC;AA6G9G,wBAAsB,QAAQ,CAAC,MAAM,EAAE,WAAW,EAAE,GAAG,EAAE,CAAC,GAAG,EAAE,MAAM,KAAK,IAAI,GAAG,OAAO,CAAC;IAAE,MAAM,EAAE,MAAM,CAAC;IAAC,MAAM,EAAE,MAAM,CAAA;CAAE,CAAC,CA8D3H"}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Poseidon Prover — WebGPU</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        button {
+            margin-right: 0.5rem;
+            padding: 0.4rem 1rem;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Poseidon Prover — WebGPU</h1>
+    <button id="loadBtn">Load Keys</button>
+    <button id="proveBtn" disabled>Prove</button>
+    <pre id="output"></pre>
+
+    <script src="./wasm_exec.js"></script>
+    <script type="module">
+        import './wnark-bridge.js';
+
+        const output = document.getElementById('output');
+        const log = (msg) => { output.textContent += msg + '\n'; console.log(msg); };
+
+        let rt, ccsHandle, pkHandle;
+
+        async function loadGoWasm(path) {
+            const go = new Go();
+            const result = await WebAssembly.instantiateStreaming(fetch(path), go.importObject);
+            go.run(result.instance);
+        }
+
+        async function loadKeys() {
+            const t0 = performance.now();
+            log('Loading WASM runtimes...');
+            await Promise.all([
+                loadGoWasm('./witness.wasm'),
+                loadGoWasm('./groth16-webgpu.wasm'),
+            ]);
+            log('Runtimes ready');
+
+            rt = globalThis.wnarkGroth16RuntimeWebGPU;
+
+            log('Fetching circuit keys...');
+            const [csBytes, pkBytes] = await Promise.all([
+                fetch('./prover/cs').then(r => r.arrayBuffer()).then(b => new Uint8Array(b)),
+                fetch('./prover/pk.dump').then(r => r.arrayBuffer()).then(b => new Uint8Array(b)),
+            ]);
+
+            const csResult = await rt.readConstraintSystem('bn254', csBytes);
+            ccsHandle = csResult.handle;
+            log(`Constraint system: ${csResult.constraints} constraints`);
+
+            const pkResult = await rt.readProvingKey('bn254', pkBytes, 'dump');
+            pkHandle = pkResult.handle;
+
+            log('Pre-warming GPU caches...');
+            await rt.prepareProvingKey(pkHandle, ccsHandle);
+
+            const setupMs = (performance.now() - t0).toFixed(2);
+            log(`[BENCH] wnark_setup_ms=${setupMs}`);
+            document.getElementById('proveBtn').disabled = false;
+        }
+
+        async function prove() {
+            const assignment = await fetch('./assignment.json').then(r => r.json());
+
+            const witnessBytes = globalThis.poseidonCreateWitness(JSON.stringify(assignment));
+            if (witnessBytes instanceof Error) throw witnessBytes;
+
+            const t0 = performance.now();
+            const proofBytes = await rt.prove(ccsHandle, pkHandle, witnessBytes);
+            const proverMs = (performance.now() - t0).toFixed(2);
+
+            log(`[BENCH] wnark_prover_ms=${proverMs}`);
+        }
+
+        document.getElementById('loadBtn').addEventListener('click', () =>
+            loadKeys().catch(e => log('Error: ' + e)));
+        document.getElementById('proveBtn').addEventListener('click', () =>
+            prove().catch(e => log('Error: ' + e)));
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,105 @@
+import { bytesToHex, fetchJSON, hexToBytes } from "../../../src/curvegpu/browser_utils.js";
+import { curveDisplayName } from "./shared/page_library.js";
+const CONFIGS = {
+    bn254: {
+        curve: "bn254",
+        title: "BN254 fp Ops Browser Smoke",
+        vectorPath: "/testdata/vectors/fp/bn254_fp_ops.json",
+    },
+    bls12_377: {
+        curve: "bls12_377",
+        title: "BLS12-377 fp Ops Browser Smoke",
+        vectorPath: "/testdata/vectors/fp/bls12_377_fp_ops.json",
+    },
+    bls12_381: {
+        curve: "bls12_381",
+        title: "BLS12-381 fp Ops Browser Smoke",
+        vectorPath: "/testdata/vectors/fp/bls12_381_fp_ops.json",
+    },
+};
+function combineElementCases(vectors) {
+    return [...vectors.element_cases, ...vectors.edge_cases, ...vectors.differential_cases];
+}
+function zeroHex(byteSize) {
+    return bytesToHex(new Uint8Array(byteSize));
+}
+function isNonZeroHex(hex) {
+    return hexToBytes(hex).some((byte) => byte !== 0);
+}
+function bytesList(hexValues) {
+    return hexValues.map(hexToBytes);
+}
+function expectHexBatch(name, got, wantHex, log) {
+    if (got.length !== wantHex.length) {
+        throw new Error(`${name}: length mismatch got=${got.length} want=${wantHex.length}`);
+    }
+    for (let i = 0; i < got.length; i += 1) {
+        const gotHex = bytesToHex(got[i]);
+        if (gotHex !== wantHex[i]) {
+            throw new Error(`${name}: mismatch at index ${i}: got=${gotHex} want=${wantHex[i]}`);
+        }
+    }
+    log(`${name}: OK`);
+}
+function expectBoolBatch(name, got, want, log) {
+    if (got.length !== want.length) {
+        throw new Error(`${name}: length mismatch got=${got.length} want=${want.length}`);
+    }
+    for (let i = 0; i < got.length; i += 1) {
+        if (got[i] !== want[i]) {
+            throw new Error(`${name}: mismatch at index ${i}: got=${String(got[i])} want=${String(want[i])}`);
+        }
+    }
+    log(`${name}: OK`);
+}
+function mustFindConvertCase(cases, name) {
+    const found = cases.find((item) => item.name === name);
+    if (!found) {
+        throw new Error(`missing convert case ${name}`);
+    }
+    return found;
+}
+export async function runSuite(module, log) {
+    const config = CONFIGS[module.id];
+    if (!config) {
+        throw new Error(`fp ops vectors unavailable for curve ${module.id}`);
+    }
+    log(`=== ${config.title} ===`);
+    log("");
+    const vectors = await fetchJSON(config.vectorPath);
+    log(`cases.sanity = ${vectors.element_cases.length}`);
+    log(`cases.edge = ${vectors.edge_cases.length}`);
+    log(`cases.differential = ${vectors.differential_cases.length}`);
+    log(`cases.normalize = ${vectors.normalize_cases.length}`);
+    log(`cases.convert = ${vectors.convert_cases.length}`);
+    const fp = module.fp;
+    const elementCases = combineElementCases(vectors);
+    const aHex = elementCases.map((item) => item.a_bytes_le);
+    const bHex = elementCases.map((item) => item.b_bytes_le);
+    const aBytes = bytesList(aHex);
+    const bBytes = bytesList(bHex);
+    const zeroHexValue = zeroHex(fp.byteSize);
+    const oneMontHex = bytesToHex(await fp.montOne());
+    expectHexBatch("copy", await fp.copyBatch(aBytes), aHex, log);
+    expectBoolBatch("equal", await fp.equalBatch(aBytes, bBytes), elementCases.map((item) => isNonZeroHex(item.equal_bytes_le)), log);
+    expectHexBatch("zero", Array.from({ length: elementCases.length }, () => fp.zero()), Array.from({ length: elementCases.length }, () => zeroHexValue), log);
+    const oneBatch = Array.from({ length: elementCases.length }, () => hexToBytes(oneMontHex));
+    expectHexBatch("one", oneBatch, Array.from({ length: elementCases.length }, () => oneMontHex), log);
+    expectHexBatch("add", await fp.addBatch(aBytes, bBytes), elementCases.map((item) => item.add_bytes_le), log);
+    expectHexBatch("sub", await fp.subBatch(aBytes, bBytes), elementCases.map((item) => item.sub_bytes_le), log);
+    expectHexBatch("neg", await fp.negBatch(aBytes), elementCases.map((item) => item.neg_a_bytes_le), log);
+    expectHexBatch("double", await fp.doubleBatch(aBytes), elementCases.map((item) => item.double_a_bytes_le), log);
+    expectHexBatch("mul", await fp.mulBatch(aBytes, bBytes), elementCases.map((item) => item.mul_bytes_le), log);
+    expectHexBatch("square", await fp.squareBatch(aBytes), elementCases.map((item) => item.square_a_bytes_le), log);
+    expectHexBatch("to_mont", await fp.toMontgomeryBatch(bytesList(vectors.convert_cases.map((item) => item.regular_bytes_le))), vectors.convert_cases.map((item) => item.mont_bytes_le), log);
+    expectHexBatch("from_mont", await fp.fromMontgomeryBatch(bytesList(vectors.convert_cases.map((item) => item.mont_bytes_le))), vectors.convert_cases.map((item) => item.regular_bytes_le), log);
+    expectHexBatch("normalize", await fp.normalizeMontBatch(bytesList(vectors.normalize_cases.map((item) => item.input_bytes_le))), vectors.normalize_cases.map((item) => item.expected_bytes_le), log);
+    const oneCase = mustFindConvertCase(vectors.convert_cases, "one");
+    const oneHexExpected = bytesToHex(await fp.montOne());
+    if (oneHexExpected !== oneCase.mont_bytes_le) {
+        throw new Error(`one: mismatch got=${oneHexExpected} want=${oneCase.mont_bytes_le}`);
+    }
+    log("");
+    log(`PASS: ${curveDisplayName(module.id)} fp browser smoke succeeded`);
+    return { passed: 1, failed: 0 };
+}
