@@ -67,9 +67,12 @@ async function ensureArkworksInitialized() {
 async function runArkworksAction() {
 	if (state.arkworks.phase === "setup") {
 		appendLog("[arkworks] Running setup...");
+		const startRun = performance.now();
 		await ensureArkworksInitialized();
 		const setupResult = runArkworksSetup();
 		appendLog(setupResult);
+		const runTime = performance.now() - startRun;
+		appendLog(`\n[BENCH] arkworks_setup_ms=${runTime.toFixed(2)}\n`);
 		appendLog("[arkworks] Setup complete.");
 		state.arkworks.phase = "benchmark";
 		return;
@@ -77,7 +80,7 @@ async function runArkworksAction() {
 
 	appendLog("[arkworks] Running WASM benchmark...");
 	const proofResult = await new Promise(resolve => {
-		setTimeout(() => { resolve(runArkworksProof()) }, 50);
+		setTimeout(() => { resolve(runArkworksProof()) }, 1);
 	});
 	appendLog(proofResult);
 	appendLog("[arkworks] Benchmark complete.");
@@ -86,7 +89,10 @@ async function runArkworksAction() {
 async function runSnarkjsAction() {
 	if (state.snarkjs.phase === "setup") {
 		appendLog("[snarkjs] Running setup...");
+		const startRun = performance.now();
 		await initializeSnarkjs();
+		const runTime = performance.now() - startRun;
+		appendLog(`\n[BENCH] snarkjs_setup_ms=${runTime.toFixed(2)}\n`);
 		appendLog("[snarkjs] Setup complete.");
 		state.snarkjs.phase = "benchmark";
 		return;
@@ -98,9 +104,7 @@ async function runSnarkjsAction() {
 	const result = await groth16.fullProve(inputJson, wasmUrl, zkeyUrl);
 	const elapsed = performance.now() - start;
 
-	appendLog(``);
-	appendLog(`[BENCH] snarkjs_prover_ms=${elapsed.toFixed(2)}`);
-	appendLog(``);
+	appendLog(`\n[BENCH] snarkjs_prover_ms=${elapsed.toFixed(2)}\n`);
 	appendLog(`snarkjs_public_signals=${result.publicSignals.length}`);
 	appendLog(`snarkjs_proof_pi_a=${JSON.stringify(result.proof.pi_a)}`);
 	appendLog("[snarkjs] Benchmark complete.");
@@ -109,21 +113,16 @@ async function runSnarkjsAction() {
 async function runGnarkAction() {
 	if (state.gnark.phase === "setup") {
 		appendLog("[gnark] Running setup...");
-		const startLoad = performance.now();
+		const startRun = performance.now();
 		const go = new Go();
 		const result = await WebAssembly.instantiateStreaming(
 			fetch(gnarkWasmUrl),
 			go.importObject
 		);
-		const loadTime = performance.now() - startLoad;
-
-		appendLog(`✓ WASM module loaded (${loadTime.toFixed(2)}ms)`);
-
-		const startRun = performance.now();
 		go.run(result.instance);
 		const runTime = performance.now() - startRun;
 
-		appendLog(`✓ Go runtime started (${runTime.toFixed(2)}ms)`);
+		appendLog(`\n[BENCH] gnark_setup_ms=${runTime.toFixed(2)}\n`);
 
 		// Test if functions are available
 		if (typeof prove !== 'undefined') {

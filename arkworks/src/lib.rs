@@ -106,7 +106,7 @@ pub fn run_browser_setup() -> Result<String, JsValue> {
     });
 
     Ok(format!(
-        "arkworks_constraints={}\narkworks_setup_ms={}",
+        "arkworks_constraints={}\n\n[BENCH] arkworks_setup_ms={}\n",
         constraints, setup_ms
     ))
 }

@@ -64,13 +64,13 @@ Benchmarked on Device: Macbook M3 Pro 36gb; OS: macOS Tahoe 26.3
 ➜  zk-bench  ./bench.sh
 == gnark ==
 [BENCH] gnark_constraints=53200
-[BENCH] gnark_prover_ms=215
+[BENCH] gnark_prover_ms=239
 == arkworks ==
 [BENCH] arkworks_constraints=53254
-[BENCH] arkworks_prover_ms=584
+[BENCH] arkworks_prover_ms=387
 == snarkjs ==
 [BENCH] snarkjs_constraints=53250
-[BENCH] snarkjs_prover_ms=1804
+[BENCH] snarkjs_prover_ms=1675
 ```
 
 ### WASM in browser
@@ -79,15 +79,30 @@ Benchmarked on Google Chrome Version 149.0.7827.115 (Official Build) (arm64);
 Device: Macbook M3 Pro 36gb; OS: macOS Tahoe 26.3
 
 ```sh
-[BENCH] arkworks_prover_ms=15469
-[BENCH] arkworks_prover_ms=9785
-[BENCH] arkworks_prover_ms=9789
+[BENCH] arkworks_setup_ms=19449.00
+[BENCH] arkworks_prover_ms=5610
 
-[BENCH] snarkjs_prover_ms=1161.90
-[BENCH] snarkjs_prover_ms=1081.50
-[BENCH] snarkjs_prover_ms=2087.30
+[BENCH] snarkjs_setup_ms=53.30
+[BENCH] snarkjs_prover_ms=1196.00
 
-[BENCH] gnark_prover_ms=7849.70
-[BENCH] gnark_prover_ms=5521.00
-[BENCH] gnark_prover_ms=5553.90
+[BENCH] gnark_setup_ms=8783.10
+[BENCH] gnark_prover_ms=5559.80
+
+[BENCH] wnark_setup_ms=581.70
+[BENCH] wnark_prover_ms=895.80
+```
+
+Total size,
+```
+[arkworks] 18.3 MB transferred
+[arkworks] 19.1 MB resources
+
+[snarkjs] 29.5 MB transferred
+[snarkjs] 30.8 MB resources
+
+[gnark] 13.0 MB transferred
+[gnark] 25.9 MB resources
+
+[wnark] 31.5 MB transferred
+[wnark] 46.2 MB resources
 ```
