@@ -7,7 +7,6 @@ import (
 	"time"
 
 	bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
-	bn254fr "github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	poseidonnative "github.com/consensys/gnark-crypto/ecc/bn254/fr/poseidon2"
 	groth16_bn254 "github.com/consensys/gnark/backend/groth16/bn254"
 	cs_bn254 "github.com/consensys/gnark/constraint/bn254"
@@ -43,7 +42,7 @@ func (c *PoseidonCircuit) Define(api frontend.API) error {
 	}
 
 	for i := 0; i < rounds; i++ {
-		state = h.Compress(0, state)
+		state = h.Compress(state, 0)
 	}
 
 	api.AssertIsEqual(c.Out, state)
