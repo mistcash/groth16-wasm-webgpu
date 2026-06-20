@@ -1,10 +1,11 @@
-# Groth16 bench
+# Groth16 bench - CLI, WASM and WebGPU
 Benchmark suite for a 53k-constraint Poseidon circuits across three proving stacks:
 
 - [arkworks](arkworks) in Rust
 - [gnark](gnark) in Go
 - [snarkjs](snarkjs) with Circom and Node.js
-- [wnark](https://github.com/ivokub/wnark-crypto) - gnark with WebGPU, kudos @ivokub
+
+All the circuits are tested in-browser with WASM, Gnark circuit in addition to WASM is also tested on WebGPU with @ivokub's wnark - [ivokub/wnark-crypto](https://github.com/ivokub/wnark-crypto).
 
 ![Proving time comparisons](proving-times.png)
 
@@ -16,7 +17,7 @@ The root scripts [setup.sh](setup.sh) and [bench.sh](bench.sh) are the main entr
 - [arkworks/web/index.html](arkworks/web/index.html) is a small in-browser wasm test harness for the arkworks circuit.
 - [gnark/main.go](gnark/main.go) compiles the circuit, runs Groth16, and prints constraint and prover timing metrics.
 - [gnark/web/index.html](gnark/web/index.html) is a small in-browser wasm test harness for the gnark circuit.
-- [gnark/webgpu/index.html](gnark/web/index.html) is a small in-browser wasm test harness for the wnark (gnark with WebGPU) circuit.
+- [gnark/webgpu/index.html](gnark/webgpu/index.html) is a in-browser WebGPU prover powered by [ivokub/wnark-crypto](https://github.com/ivokub/wnark-crypto) (gnark with WebGPU).
 - [snarkjs/setup.sh](snarkjs/setup.sh) prepares the Circom circuit, ptau, zkey, and verification key.
 - [snarkjs/bench.sh](snarkjs/bench.sh) generates a witness and measures proving time.
 - [snarkjs/web/index.html](snarkjs/web/index.html) is a small in-browser wasm test harness for the generated Circom circuit.
