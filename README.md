@@ -1,17 +1,22 @@
-# zk-bench
+# Groth16 bench
 Benchmark suite for a 53k-constraint Poseidon circuits across three proving stacks:
 
-- [gnark](gnark) in Go
 - [arkworks](arkworks) in Rust
+- [gnark](gnark) in Go
 - [snarkjs](snarkjs) with Circom and Node.js
+- [wnark](https://github.com/ivokub/wnark-crypto) - gnark with WebGPU, kudos @ivokub
+
+![Proving time comparisons](proving-times.png)
 
 The root scripts [setup.sh](setup.sh) and [bench.sh](bench.sh) are the main entrypoints. `setup.sh` prepares dependencies and SnarkJS artifacts for all stacks, and `bench.sh` runs the benchmarks in sequence.
 
 ## Layout
 
-- [gnark/main.go](gnark/main.go) compiles the circuit, runs Groth16, and prints constraint and prover timing metrics.
 - [arkworks/src/main.rs](arkworks/src/main.rs) does the same for the arkworks stack.
 - [arkworks/web/index.html](arkworks/web/index.html) is a small in-browser wasm test harness for the arkworks circuit.
+- [gnark/main.go](gnark/main.go) compiles the circuit, runs Groth16, and prints constraint and prover timing metrics.
+- [gnark/web/index.html](gnark/web/index.html) is a small in-browser wasm test harness for the gnark circuit.
+- [gnark/webgpu/index.html](gnark/web/index.html) is a small in-browser wasm test harness for the wnark (gnark with WebGPU) circuit.
 - [snarkjs/setup.sh](snarkjs/setup.sh) prepares the Circom circuit, ptau, zkey, and verification key.
 - [snarkjs/bench.sh](snarkjs/bench.sh) generates a witness and measures proving time.
 - [snarkjs/web/index.html](snarkjs/web/index.html) is a small in-browser wasm test harness for the generated Circom circuit.
@@ -62,12 +67,12 @@ Benchmarked on Device: Macbook M3 Pro 36gb; OS: macOS Tahoe 26.3
 
 ```sh
 ➜  zk-bench  ./bench.sh
-== gnark ==
-[BENCH] gnark_constraints=53200
-[BENCH] gnark_prover_ms=239
 == arkworks ==
 [BENCH] arkworks_constraints=53254
 [BENCH] arkworks_prover_ms=387
+== gnark ==
+[BENCH] gnark_constraints=53200
+[BENCH] gnark_prover_ms=239
 == snarkjs ==
 [BENCH] snarkjs_constraints=53250
 [BENCH] snarkjs_prover_ms=1675
@@ -82,11 +87,11 @@ Device: Macbook M3 Pro 36gb; OS: macOS Tahoe 26.3
 [BENCH] arkworks_setup_ms=19449.00
 [BENCH] arkworks_prover_ms=5610
 
-[BENCH] snarkjs_setup_ms=53.30
-[BENCH] snarkjs_prover_ms=1196.00
-
 [BENCH] gnark_setup_ms=8783.10
 [BENCH] gnark_prover_ms=5559.80
+
+[BENCH] snarkjs_setup_ms=53.30
+[BENCH] snarkjs_prover_ms=1196.00
 
 [BENCH] wnark_setup_ms=581.70
 [BENCH] wnark_prover_ms=895.80
@@ -97,11 +102,11 @@ Total size,
 [arkworks] 18.3 MB transferred
 [arkworks] 19.1 MB resources
 
-[snarkjs] 29.5 MB transferred
-[snarkjs] 30.8 MB resources
-
 [gnark] 13.0 MB transferred
 [gnark] 25.9 MB resources
+
+[snarkjs] 29.5 MB transferred
+[snarkjs] 30.8 MB resources
 
 [wnark] 31.5 MB transferred
 [wnark] 46.2 MB resources
